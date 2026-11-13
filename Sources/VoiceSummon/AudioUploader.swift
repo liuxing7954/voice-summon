@@ -78,7 +78,6 @@ enum AudioUploader {
 
     /// 自建上传口（挂在 notify 域名下的 /vs-audio）。
     static let builtinEndpoint = "https://notify.v2.wobuqu.icu/vs-audio/upload"
-    static let builtinToken = "df029bc8ff97b77478c44d3deabd7ebb"
 
     private static func upload(_ fileURL: URL, target: Target) async throws -> URL {
         guard !target.url.isEmpty, let endpoint = URL(string: target.url) else {
