@@ -20,7 +20,7 @@ echo "==> 编译 $HOST_ARCH"
 swift build -c release >/dev/null
 HOST_BIN="$(swift build -c release --show-bin-path)/$APP_NAME"
 
-echo "==> 编译 $OTHER_ARCH（交叉）"
+echo "==> 编译 ${OTHER_ARCH} 交叉"
 OTHER_BIN=""
 if swift build -c release --triple "$OTHER_TRIPLE" >/dev/null 2>&1; then
   OTHER_BIN="$(swift build -c release --triple "$OTHER_TRIPLE" --show-bin-path)/$APP_NAME"
