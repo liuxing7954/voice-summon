@@ -1,0 +1,126 @@
+#!/bin/bash
+# voicesummon — 在终端里控制 VoiceSummon（走本机 127.0.0.1:18990）
+set -euo pipefail
+
+BASE="${VS_API:-http://127.0.0.1:18990}"
+PY="${PYTHON:-python3}"
+
+die() { echo "错误：$*" >&2; exit 1; }
+
+pretty() {
+    "$PY" -c 'import json,sys;print(json.dumps(json.load(sys.stdin), ensure_ascii=False, indent=2))' 2>/dev/null || cat
+}
+
+need_app() {
+    curl -fsS -m 2 "$BASE/status" >/dev/null 2>&1 || \
+        die "连不上 VoiceSummon（$BASE）。app 启动了吗？菜单栏那只波形图标。"
+}
+
+usage() {
+    cat <<'USAGE'
+voicesummon — 控制 VoiceSummon
+
+  看状态
+    voicesummon status                监听中？关键词？增益多少？
+    voicesummon hits                  最近 10 次命中
+
+  开关
+    voicesummon start                 开始监听
+    voicesummon stop                  暂停
+    voicesummon toggle                切一下
+
+  关键词
+    voicesummon keyword list
+    voicesummon keyword add 张三 李四
+    voicesummon keyword remove 张三
+
+  改设置
+    voicesummon set cooldown 5        命中后静默几秒
+    voicesummon set preRoll 5         命中前录几秒
+    voicesummon set postRoll 5        命中后录几秒（也决定通知延迟）
+    voicesummon set matchLevel fuzzy  exact / homophone / fuzzy
+    voicesummon set farFieldBoost true
+    voicesummon set maxBoostDB 24     最大增益 dB
+    voicesummon set localeID zh-CN
+    voicesummon set onDeviceRecognition false
+    voicesummon set audioUpload false 关掉录音传公网
+
+  其它
+    voicesummon test                  发一条测试通知
+    voicesummon help
+USAGE
+}
+
+cmd="${1:-status}"
+shift || true
+
+case "$cmd" in
+    status)
+        need_app
+        curl -fsS "$BASE/status" | pretty
+        ;;
+    hits)
+        need_app
+        curl -fsS "$BASE/hits" | pretty
+        ;;
+    start|stop|toggle)
+        need_app
+        curl -fsS -X POST "$BASE/$cmd" | pretty
+        ;;
+    test)
+        need_app
+        curl -fsS -X POST "$BASE/test-notify" | pretty
+        ;;
+    keyword|keywords)
+        need_app
+        sub="${1:-list}"
+        shift || true
+        case "$sub" in
+            list)
+                curl -fsS "$BASE/keywords" | pretty
+                ;;
+            add|remove|rm)
+                [ $# -gt 0 ] || die "用法：voicesummon keyword $sub 张三"
+                case "$sub" in
+                    add) action="add" ;;
+                    *) action="remove" ;;
+                esac
+                for word in "$@"; do
+                    payload="$("$PY" -c 'import json,sys;print(json.dumps({sys.argv[1]:[sys.argv[2]]},ensure_ascii=False))' "$action" "$word")"
+                    curl -fsS -X POST "$BASE/keywords" -H 'Content-Type: application/json' -d "$payload" >/dev/null
+                done
+                curl -fsS "$BASE/keywords" | pretty
+                ;;
+            *)
+                die "用法：voicesummon keyword list|add|remove"
+                ;;
+        esac
+        ;;
+    set)
+        need_app
+        key="${1:-}"
+        value="${2:-}"
+        [ -n "$key" ] && [ -n "$value" ] || die "用法：voicesummon set cooldown 5"
+        payload="$("$PY" -c '
+import json, sys
+key, raw = sys.argv[1], sys.argv[2]
+lower = raw.lower()
+if lower in ("true", "false"):
+    value = lower == "true"
+else:
+    try:
+        number = float(raw)
+        value = int(number) if number.is_integer() else number
+    except ValueError:
+        value = raw
+print(json.dumps({key: value}, ensure_ascii=False))
+' "$key" "$value")"
+        curl -fsS -X POST "$BASE/config" -H 'Content-Type: application/json' -d "$payload" | pretty
+        ;;
+    help|-h|--help)
+        usage
+        ;;
+    *)
+        die "不认识的命令：$cmd（voicesummon help）"
+        ;;
+esac

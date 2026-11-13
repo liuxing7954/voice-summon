@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>zh_CN</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.fujiang.voicesummon</string>
+    <key>CFBundleName</key>
+    <string>VoiceSummon</string>
+    <key>CFBundleDisplayName</key>
+    <string>喊我</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
+    <key>CFBundleExecutable</key>
+    <string>VoiceSummon</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.5.3</string>
+    <key>CFBundleVersion</key>
+    <string>13</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>14.0</string>
+    <key>LSUIElement</key>
+    <true/>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>需要麦克风来监听办公室里是否有人叫你。音频只在内存里滚动保存，命中关键词后才会落盘。</string>
+    <key>NSSpeechRecognitionUsageDescription</key>
+    <string>需要语音识别把听到的声音转成文字，用来判断有没有叫到你的关键词。</string>
+    <key>NSHumanReadableCopyright</key>
+    <string>VoiceSummon</string>
+</dict>
+</plist>
