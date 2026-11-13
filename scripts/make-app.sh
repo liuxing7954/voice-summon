@@ -10,18 +10,27 @@ DIST="dist"
 APP="$DIST/$APP_NAME.app"
 ARCH_LIST="$(uname -m)"
 
-echo "==> 编译 arm64"
-swift build -c release >/dev/null
-ARM_BIN="$(swift build -c release --show-bin-path)/$APP_NAME"
+HOST_ARCH="$(uname -m)"
+case "$HOST_ARCH" in
+  arm64) OTHER_ARCH="x86_64"; OTHER_TRIPLE="x86_64-apple-macos14.0" ;;
+  *)     OTHER_ARCH="arm64";  OTHER_TRIPLE="arm64-apple-macos14.0" ;;
+esac
 
-echo "==> 编译 x86_64（Intel 兼容）"
-X86_BIN=""
-if swift build -c release --triple x86_64-apple-macos14.0 >/dev/null 2>&1; then
-  X86_BIN="$(swift build -c release --triple x86_64-apple-macos14.0 --show-bin-path)/$APP_NAME"
-  ARCH_LIST="arm64 + x86_64"
+echo "==> 编译 $HOST_ARCH"
+swift build -c release >/dev/null
+HOST_BIN="$(swift build -c release --show-bin-path)/$APP_NAME"
+
+echo "==> 编译 $OTHER_ARCH（交叉）"
+OTHER_BIN=""
+if swift build -c release --triple "$OTHER_TRIPLE" >/dev/null 2>&1; then
+  OTHER_BIN="$(swift build -c release --triple "$OTHER_TRIPLE" --show-bin-path)/$APP_NAME"
+  ARCH_LIST="$HOST_ARCH + $OTHER_ARCH"
 else
-  echo "    x86_64 交叉编译不可用，只出当前架构"
+  echo "    $OTHER_ARCH 交叉编译不可用，只出当前架构"
 fi
+
+ARM_BIN="$HOST_BIN"
+X86_BIN="$OTHER_BIN"
 
 echo "==> 组装 $APP"
 rm -rf "$APP"
